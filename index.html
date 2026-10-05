@@ -686,7 +686,8 @@
     h += ((inside ? 1 : 0) - h) * Math.min(1, dt * 4);
     if (!reduce) {
       t += dt; clock += dt; wz -= dt * 15;
-      if (clock > nextW) { wz = 38; nextW = clock + (inside ? 1.6 : 5); }
+      // A new wave waits until the last one has rolled past the nearest rows.
+      if (clock > nextW && wz < 2) { wz = 38; nextW = clock + (inside ? 1.6 : 5); }
     }
     if (glT > 0) {
       glT -= dt; gl = 1; bandTick -= dt;
