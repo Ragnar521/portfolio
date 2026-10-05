@@ -158,7 +158,7 @@
   .jobs p:last-child { margin-top: 0.6rem; color: var(--muted); }
 
   /* Footer: the same particles, seen from the ground */
-  .end { position: relative; overflow: hidden; border-top: 1px solid var(--line); padding-top: clamp(4rem, 9vw, 8rem); padding-bottom: clamp(20rem, 38vw, 28rem); }
+  .end { position: relative; overflow: hidden; border-top: 1px solid var(--line); padding-top: clamp(4rem, 9vw, 8rem); padding-bottom: max(clamp(20rem, 38vw, 28rem), calc(28rem + (100vw - 1440px) * 0.2)); }
   .end canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
   .end-in { position: relative; }
   .end h2 { font-size: clamp(2.2rem, 5.5vw, 4.5rem); font-weight: 700; font-stretch: 90%; max-width: 18ch; }
@@ -624,8 +624,12 @@
   const ctx = cv.getContext('2d');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const IDLE = [185, 164, 255], HOT = [255, 46, 126];
-  const DX = 0.16, CAM = 1.6, ROWS = 46;
+  const CAM = 1.6;
   let W = 0, H = 0;
+  // Up to 1440px wide the scene keeps its original layout. Wider screens grow the
+  // strip, focal length and moon by `grow`, and dot pitch and size by `pitch`,
+  // which rises a little slower so the point count stays bounded.
+  let grow = 1, pitch = 1, relief = 1, DX = 0.16, zs = [], moon = [];
 
   function resize() {
     const r = el.getBoundingClientRect();
@@ -634,32 +638,41 @@
     cv.width = Math.max(1, Math.round(W * dpr));
     cv.height = Math.max(1, Math.round(H * dpr));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const u = Math.max(1, W / 1440);
+    grow = Math.pow(u, 0.67);
+    pitch = Math.pow(grow, 0.8);
+    relief = 1 + 0.6 * (grow - 1);
+    DX = 0.16 * pitch / grow * Math.max(1, W / 3440);
+    const n = Math.round(45 * grow / pitch) + 1, ratio = Math.pow(1.045, 45 / (n - 1));
+    if (n !== zs.length) { zs = []; for (let k = 0; k < n; k++) zs.push(5 * Math.pow(ratio, k)); }
+    const m = Math.round(260 * Math.min(pitch * pitch, 2.6));
+    if (m !== moon.length) {
+      moon = [];
+      for (let i = 0; i < m; i++) {
+        const y = 1 - 2 * (i + 0.5) / m, q = Math.sqrt(1 - y * y), th = GA * i;
+        moon.push([Math.cos(th) * q, y, Math.sin(th) * q]);
+      }
+    }
   }
-  new ResizeObserver(resize).observe(el);
-  resize();
 
   const cols = [];
   for (let i = 0; i <= 6; i++) {
     const m = i / 6;
     cols.push('rgb(' + Math.round(IDLE[0] + (HOT[0] - IDLE[0]) * m) + ',' + Math.round(IDLE[1] + (HOT[1] - IDLE[1]) * m) + ',' + Math.round(IDLE[2] + (HOT[2] - IDLE[2]) * m) + ')');
   }
-  const zs = [];
-  for (let k = 0; k < ROWS; k++) zs.push(5 * Math.pow(1.045, k));
+  const GA = Math.PI * (3 - Math.sqrt(5));
+  new ResizeObserver(resize).observe(el);
+  resize();
 
-  const moon = [], g = Math.PI * (3 - Math.sqrt(5));
-  for (let i = 0; i < 260; i++) {
-    const y = 1 - 2 * (i + 0.5) / 260, q = Math.sqrt(1 - y * y), th = g * i;
-    moon.push([Math.cos(th) * q, y, Math.sin(th) * q]);
-  }
   const stars = [];
-  for (let i = 0; i < 110; i++) stars.push({ x: Math.random(), y: Math.random(), a: 0.1 + Math.random() * 0.4 });
+  for (let i = 0; i < 264; i++) stars.push({ x: Math.random(), y: Math.random(), a: 0.1 + Math.random() * 0.4 });
 
   function hgt(x, z) {
     let h = 0.5 * Math.sin(x * 0.33 + 1.3) * Math.cos(z * 0.21) + 0.22 * Math.sin(x * 0.95 + z * 0.6);
-    h += 3.4 * Math.exp(-((x - 9) * (x - 9)) / 38 - ((z - 27) * (z - 27)) / 30);
-    h += 1.9 * Math.exp(-((x + 13) * (x + 13)) / 60 - ((z - 24) * (z - 24)) / 40);
-    h += 1.3 * Math.exp(-((x - 24) * (x - 24)) / 30 - ((z - 30) * (z - 30)) / 30);
-    return h;
+    let b = 3.4 * Math.exp(-((x - 9) * (x - 9)) / 38 - ((z - 27) * (z - 27)) / 30);
+    b += 1.9 * Math.exp(-((x + 13) * (x + 13)) / 60 - ((z - 24) * (z - 24)) / 40);
+    b += 1.3 * Math.exp(-((x - 24) * (x - 24)) / 30 - ((z - 30) * (z - 30)) / 30);
+    return h + b * relief;
   }
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -684,16 +697,18 @@
     } else gl = 0;
 
     ctx.clearRect(0, 0, W, H);
-    const cx = W / 2, F = Math.max(W, 700) * 0.75;
-    const yH = H - clamp(W * 0.22, 150, 300);
+    const wide = W > 1440, cx = W / 2;
+    const F = wide ? 1080 * grow : Math.max(W, 700) * 0.75;
+    const strip = wide ? 300 * grow : clamp(W * 0.22, 150, 300), yH = H - strip;
     const base = Math.round(Math.max(h, gl) * 6);
 
     // Sky
     ctx.fillStyle = 'rgb(200,190,235)';
-    for (const s of stars) { ctx.globalAlpha = Math.min(1, s.a * 1.6); ctx.fillRect(s.x * W, s.y * yH, 1.3, 1.3); }
+    const nStars = Math.min(stars.length, Math.round(110 * Math.max(1, W / 1440)));
+    for (let i = 0; i < nStars; i++) { const s = stars[i]; ctx.globalAlpha = Math.min(1, s.a * 1.6); ctx.fillRect(s.x * W, s.y * yH, 1.3, 1.3); }
 
     // The planet from the top of the page, now a moon
-    const Rm = clamp(Math.min(W, H) * 0.09, 34, 70);
+    const Rm = wide ? 70 * grow : clamp(Math.min(W, H) * 0.09, 34, 70);
     const mxp = W * 0.8, myp = yH - Rm * 2.3;
     const a = t * 0.3, ca = Math.cos(a), sa = Math.sin(a), ct = Math.cos(0.3), st = Math.sin(0.3);
     ctx.globalCompositeOperation = 'lighter';
@@ -715,18 +730,29 @@
       const an = t * (0.5 - i * 0.12) + i * 2.1, ro = Rm * (1.55 + i * 0.3);
       const ox = mxp + Math.cos(an) * ro, oy = myp + Math.sin(an) * ro * 0.32;
       ctx.globalAlpha = 0.5 + 0.4 * Math.sin(an);
-      ctx.beginPath(); ctx.arc(ox, oy, 3 - i * 0.5, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.arc(ox, oy, (3 - i * 0.5) * pitch, 0, 6.2832); ctx.fill();
     }
     ctx.globalCompositeOperation = 'source-over';
 
+    // One small figure on the ground, a third of the way in, facing the moon
+    const zWant = CAM * F / (strip * 0.42);
+    let kf = 0; while (kf < zs.length - 1 && zs[kf] < zWant) kf++;
+    let xf = 0, fx = 0, fy = H;
+    for (; kf < zs.length; kf++) {
+      const scf = F / zs[kf];
+      xf = Math.round(((W * 0.34 - cx) / scf) / DX) * DX;
+      fx = cx + xf * scf; fy = yH + (CAM - hgt(xf, zs[kf])) * scf;
+      if (fy < H - 8) break;
+    }
+
     // Terrain, far rows first
-    for (let k = ROWS - 1; k >= 0; k--) {
+    for (let k = zs.length - 1; k >= 0; k--) {
       const z = zs[k], sc = F / z;
       const d = (z - wz) / (1 + z * 0.1);
       const heat = wz > 0 ? Math.exp(-d * d) : 0;
       ctx.fillStyle = cols[Math.round(Math.min(1, Math.max(heat, h * 0.3, gl)) * 6)];
-      const size = clamp(sc * 0.02, 1.4, 3.2);
-      const al = 0.55 + 0.45 * (1 - k / ROWS) + heat * 0.4;
+      const size = clamp(sc * 0.02 * pitch / grow, 1.4, 3.2 * pitch);
+      const al = 0.55 + 0.45 * (1 - k / zs.length) + heat * 0.4;
       const half = cx / sc + DX, i0 = Math.ceil(-half / DX), i1 = Math.floor(half / DX);
       for (let i = i0; i <= i1; i++) {
         const x = i * DX;
@@ -737,23 +763,41 @@
         ctx.globalAlpha = Math.min(1, al * (0.82 + 0.18 * Math.sin(t * 1.6 + i * 1.7 + k * 2.3)));
         ctx.fillRect(sx, sy, size, size);
       }
+      if (k === kf) figure(fx, fy - heat * 0.12 * sc, size, Math.min(1, al));
     }
-
-    // One small figure on the ground, looking up
-    const tp = H - yH, zWant = CAM * F / (tp * 0.42);
-    let kf = 0; while (kf < ROWS - 1 && zs[kf] < zWant) kf++;
-    const zf = zs[kf], scf = F / zf;
-    const xf = Math.round(((W * 0.34 - cx) / scf) / DX) * DX;
-    const fx = cx + xf * scf, fy = yH + (CAM - hgt(xf, zf)) * scf;
-    const fh = clamp(W * 0.016, 18, 36);
-    ctx.globalAlpha = 1; ctx.fillStyle = '#ffffff';
-    ctx.beginPath(); ctx.arc(fx, fy - fh * 0.88, fh * 0.12, 0, 6.2832); ctx.fill();
-    ctx.fillRect(fx - fh * 0.09, fy - fh * 0.74, fh * 0.18, fh * 0.42);
-    ctx.fillRect(fx - fh * 0.09, fy - fh * 0.34, fh * 0.07, fh * 0.34);
-    ctx.fillRect(fx + fh * 0.02, fy - fh * 0.34, fh * 0.07, fh * 0.34);
 
     ctx.globalAlpha = 1;
     requestAnimationFrame(frame);
+  }
+
+  // Someone standing still, head tipped up toward the moon, one dot per mark.
+  const MAN = [
+    '..XX.',
+    '..XXX',
+    '..XX.',
+    '..X..',
+    '.XXX.',
+    'XXXXX',
+    'XXXXX',
+    'X.X.X',
+    '.XXX.',
+    '.X.X.',
+    '.X.X.',
+    '.X.X.',
+    '.X.X.'
+  ];
+  function figure(fx, fy, size, al) {
+    const p = size * 1.45, rows = MAN.length;
+    ctx.globalAlpha = al;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < 5; c++) {
+        if (MAN[r][c] !== 'X') continue;
+        const sy = fy - (rows - r) * p;
+        let sx = fx + (c - 2) * p;
+        if (gl) { const bi = (sy / bandH) | 0; if (bi >= 0 && bi < 64) sx += bands[bi]; }
+        ctx.fillRect(sx, sy, size, size);
+      }
+    }
   }
 
   el.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') { inside = true; if (!reduce) glT = 0.3; } });
