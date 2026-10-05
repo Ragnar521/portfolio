@@ -157,11 +157,13 @@
   .jobs .when { color: var(--muted); font-size: 0.925rem; margin-top: 0.25rem; }
   .jobs p:last-child { margin-top: 0.6rem; color: var(--muted); }
 
-  /* Contact */
-  .contact { border-top: 1px solid var(--line); }
-  .contact h2 { font-size: clamp(2.2rem, 5.5vw, 4.5rem); font-weight: 700; font-stretch: 90%; max-width: 18ch; }
-  .contact .links { margin-top: 2rem; font-size: 1.125rem; }
-  footer { padding-block: 2rem 3rem; color: var(--muted); font-size: 0.875rem; }
+  /* Footer: the same particles, seen from the ground */
+  .end { position: relative; overflow: hidden; border-top: 1px solid var(--line); padding-top: clamp(4rem, 9vw, 8rem); padding-bottom: clamp(20rem, 38vw, 28rem); }
+  .end canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+  .end-in { position: relative; }
+  .end h2 { font-size: clamp(2.2rem, 5.5vw, 4.5rem); font-weight: 700; font-stretch: 90%; max-width: 18ch; }
+  .end .links { margin-top: 2rem; font-size: 1.125rem; }
+  .end .credit { margin-top: 2.5rem; color: var(--muted); font-size: 0.875rem; }
 
   @media (max-width: 52rem) {
     .hero { grid-template-columns: minmax(0, 1fr); min-height: 0; padding-bottom: 2rem; }
@@ -360,19 +362,20 @@
   </section>
 
 
-  <section id="contact" class="contact">
-    <div class="wrap">
-      <h2>Got a product to fix or an idea to build? Write to me.</h2>
-      <p class="links">
-        <a href="https://www.linkedin.com/in/radek-muzikant521/">LinkedIn</a>
-        <a href="#">GitHub</a>
-        <a href="mailto:you@example.com">Email</a>
-      </p>
-    </div>
-  </section>
 </main>
 
-<footer class="wrap">Designed and built by Radek Muzikant in Prague.</footer>
+<footer id="contact" class="end">
+  <canvas id="land" aria-hidden="true"></canvas>
+  <div class="wrap end-in">
+    <h2>Got a product to fix or an idea to build? Write to me.</h2>
+    <p class="links">
+      <a href="https://www.linkedin.com/in/radek-muzikant521/">LinkedIn</a>
+      <a href="#">GitHub</a>
+      <a href="mailto:you@example.com">Email</a>
+    </p>
+    <p class="credit">Designed and built by Radek Muzikant in Prague.</p>
+  </div>
+</footer>
 
 <script>
 (() => {
@@ -611,6 +614,149 @@
   }).observe(wrap);
 
   requestAnimationFrame(frame);
+})();
+</script>
+<script>
+(() => {
+  // Footer scene: a dotted landscape under the same small planet, with one figure for scale.
+  const el = document.getElementById('contact');
+  const cv = document.getElementById('land');
+  const ctx = cv.getContext('2d');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const IDLE = [185, 164, 255], HOT = [255, 46, 126];
+  const DX = 0.16, CAM = 1.6, ROWS = 46;
+  let W = 0, H = 0;
+
+  function resize() {
+    const r = el.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height;
+    cv.width = Math.max(1, Math.round(W * dpr));
+    cv.height = Math.max(1, Math.round(H * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  new ResizeObserver(resize).observe(el);
+  resize();
+
+  const cols = [];
+  for (let i = 0; i <= 6; i++) {
+    const m = i / 6;
+    cols.push('rgb(' + Math.round(IDLE[0] + (HOT[0] - IDLE[0]) * m) + ',' + Math.round(IDLE[1] + (HOT[1] - IDLE[1]) * m) + ',' + Math.round(IDLE[2] + (HOT[2] - IDLE[2]) * m) + ')');
+  }
+  const zs = [];
+  for (let k = 0; k < ROWS; k++) zs.push(5 * Math.pow(1.045, k));
+
+  const moon = [], g = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < 260; i++) {
+    const y = 1 - 2 * (i + 0.5) / 260, q = Math.sqrt(1 - y * y), th = g * i;
+    moon.push([Math.cos(th) * q, y, Math.sin(th) * q]);
+  }
+  const stars = [];
+  for (let i = 0; i < 110; i++) stars.push({ x: Math.random(), y: Math.random(), a: 0.1 + Math.random() * 0.4 });
+
+  function hgt(x, z) {
+    let h = 0.5 * Math.sin(x * 0.33 + 1.3) * Math.cos(z * 0.21) + 0.22 * Math.sin(x * 0.95 + z * 0.6);
+    h += 3.4 * Math.exp(-((x - 9) * (x - 9)) / 38 - ((z - 27) * (z - 27)) / 30);
+    h += 1.9 * Math.exp(-((x + 13) * (x + 13)) / 60 - ((z - 24) * (z - 24)) / 40);
+    h += 1.3 * Math.exp(-((x - 24) * (x - 24)) / 30 - ((z - 30) * (z - 30)) / 30);
+    return h;
+  }
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  let t = 0, clock = 0, last = performance.now(), h = 0, inside = false, running = false;
+  let wz = -1, nextW = 1.2, glT = 0, gl = 0, bandH = 30, bandTick = 0;
+  const bands = new Float32Array(64);
+
+  function frame(now) {
+    if (!running) return;
+    const dt = Math.min((now - last) / 1000, 0.05); last = now;
+    h += ((inside ? 1 : 0) - h) * Math.min(1, dt * 4);
+    if (!reduce) {
+      t += dt; clock += dt; wz -= dt * 15;
+      if (clock > nextW) { wz = 38; nextW = clock + (inside ? 1.6 : 5); }
+    }
+    if (glT > 0) {
+      glT -= dt; gl = 1; bandTick -= dt;
+      if (bandTick <= 0) {
+        bandTick = 0.07; bandH = 12 + Math.random() * 26;
+        for (let i = 0; i < 64; i++) bands[i] = Math.random() < 0.35 ? (Math.random() - 0.5) * 70 : 0;
+      }
+    } else gl = 0;
+
+    ctx.clearRect(0, 0, W, H);
+    const cx = W / 2, F = Math.max(W, 700) * 0.75;
+    const yH = H - clamp(W * 0.22, 150, 300);
+    const base = Math.round(Math.max(h, gl) * 6);
+
+    // Sky
+    ctx.fillStyle = 'rgb(200,190,235)';
+    for (const s of stars) { ctx.globalAlpha = s.a; ctx.fillRect(s.x * W, s.y * yH, 1, 1); }
+
+    // The planet from the top of the page, now a moon
+    const Rm = clamp(Math.min(W, H) * 0.09, 34, 70);
+    const mxp = W * 0.8, myp = yH - Rm * 2.3;
+    const a = t * 0.3, ca = Math.cos(a), sa = Math.sin(a), ct = Math.cos(0.3), st = Math.sin(0.3);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = cols[base];
+    for (const p of moon) {
+      const x = p[0] * ca + p[2] * sa, z1 = -p[0] * sa + p[2] * ca;
+      const y = p[1] * ct - z1 * st, z = p[1] * st + z1 * ct;
+      let sx = mxp + x * Rm; const sy = myp - y * Rm;
+      if (gl) { const bi = (sy / bandH) | 0; if (bi >= 0 && bi < 64) sx += bands[bi]; }
+      ctx.globalAlpha = 0.25 + 0.6 * (z + 1) / 2;
+      ctx.fillRect(sx, sy, 1.4, 1.4);
+    }
+    for (let i = 0; i < 3; i++) {
+      const an = t * (0.5 - i * 0.12) + i * 2.1, ro = Rm * (1.55 + i * 0.3);
+      const ox = mxp + Math.cos(an) * ro, oy = myp + Math.sin(an) * ro * 0.32;
+      ctx.globalAlpha = 0.5 + 0.4 * Math.sin(an);
+      ctx.beginPath(); ctx.arc(ox, oy, 2.2 - i * 0.4, 0, 6.2832); ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+
+    // Terrain, far rows first
+    for (let k = ROWS - 1; k >= 0; k--) {
+      const z = zs[k], sc = F / z;
+      const d = (z - wz) / (1 + z * 0.1);
+      const heat = wz > 0 ? Math.exp(-d * d) : 0;
+      ctx.fillStyle = cols[Math.round(Math.min(1, Math.max(heat, h * 0.3, gl)) * 6)];
+      const size = clamp(sc * 0.016, 0.9, 2.6);
+      const al = 0.25 + 0.6 * (1 - k / ROWS) + heat * 0.4;
+      const half = cx / sc + DX, i0 = Math.ceil(-half / DX), i1 = Math.floor(half / DX);
+      for (let i = i0; i <= i1; i++) {
+        const x = i * DX;
+        const sy = yH + (CAM - hgt(x, z) - heat * 0.12) * sc;
+        if (sy > H + 4) continue;
+        let sx = cx + x * sc;
+        if (gl) { const bi = (sy / bandH) | 0; if (bi >= 0 && bi < 64) sx += bands[bi]; }
+        ctx.globalAlpha = Math.min(1, al * (0.78 + 0.22 * Math.sin(t * 1.6 + i * 1.7 + k * 2.3)));
+        ctx.fillRect(sx, sy, size, size);
+      }
+    }
+
+    // One small figure on the ground, looking up
+    const zf = zs[18], scf = F / zf;
+    const xf = Math.round(((W * 0.34 - cx) / scf) / DX) * DX;
+    const fx = cx + xf * scf, fy = yH + (CAM - hgt(xf, zf)) * scf;
+    const fh = clamp(scf * 0.2, 12, 20);
+    ctx.globalAlpha = 0.95; ctx.fillStyle = '#efecf7';
+    ctx.beginPath(); ctx.arc(fx, fy - fh * 0.88, fh * 0.12, 0, 6.2832); ctx.fill();
+    ctx.fillRect(fx - fh * 0.09, fy - fh * 0.74, fh * 0.18, fh * 0.42);
+    ctx.fillRect(fx - fh * 0.09, fy - fh * 0.34, fh * 0.07, fh * 0.34);
+    ctx.fillRect(fx + fh * 0.02, fy - fh * 0.34, fh * 0.07, fh * 0.34);
+
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(frame);
+  }
+
+  el.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') { inside = true; if (!reduce) glT = 0.3; } });
+  el.addEventListener('pointerleave', () => { inside = false; });
+
+  new IntersectionObserver(entries => {
+    const vis = entries[0].isIntersecting;
+    if (vis && !running) { running = true; last = performance.now(); requestAnimationFrame(frame); }
+    else if (!vis) running = false;
+  }).observe(el);
 })();
 </script>
 </body>
