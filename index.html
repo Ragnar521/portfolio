@@ -685,7 +685,10 @@
     const dt = Math.min((now - last) / 1000, 0.05); last = now;
     h += ((inside ? 1 : 0) - h) * Math.min(1, dt * 4);
     if (!reduce) {
-      t += dt; clock += dt; wz -= dt * 15;
+      t += dt; clock += dt;
+      const was = wz; wz -= dt * 15;
+      // Every wave ends with a glitch as it rolls off the nearest rows.
+      if (was >= 2 && wz < 2) glT = 0.3;
       // A new wave waits until the last one has rolled past the nearest rows.
       if (clock > nextW && wz < 2) { wz = 38; nextW = clock + (inside ? 1.6 : 5); }
     }
