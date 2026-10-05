@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Radek Muzikant – QA and product engineer</title>
+<meta name="description" content="Radek Muzikant, QA and product engineer in Prague. Test automation, quality ownership and AI-assisted development for product teams, plus the apps I build myself.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Onest:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root,
+  :root[data-theme="dark"],
+  :root[data-theme="light"] {
+    color-scheme: dark;
+    --bg: #000000;
+    --panel: #0c0a12;
+    --line: #221d30;
+    --text: #efecf7;
+    --muted: #918aa6;
+    --lilac: #b9a4ff;
+    --accent: #ff2e7e;
+    --display: "Bricolage Grotesque", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    --body: "Onest", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --gutter: clamp(1.25rem, 4vw, 3.5rem);
+    --measure: 34rem;
+  }
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { scroll-behavior: smooth; scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 1.5rem); }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration-color: var(--accent); text-underline-offset: 0.22em; text-decoration-thickness: 1px; }
+  a:hover { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 600; line-height: 1.02; margin: 0; letter-spacing: -0.02em; }
+  p { margin: 0; }
+  ul { margin: 0; padding: 0; list-style: none; }
+
+  .wrap { max-width: 78rem; margin: 0 auto; padding-inline: var(--gutter); }
+
+  /* Header */
+  .top {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+    padding-block: 1.5rem; flex-wrap: wrap;
+    position: relative; z-index: 2;
+  }
+  .top .name { font-family: var(--display); font-weight: 600; font-size: 1.125rem; text-decoration: none; }
+  .top nav { display: flex; gap: clamp(1rem, 3vw, 2.25rem); font-size: 0.95rem; color: var(--muted); }
+  .top nav a { text-decoration: none; }
+
+  /* Hero */
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    align-items: center;
+    min-height: min(52rem, calc(100svh - 5rem));
+    gap: 1rem;
+  }
+  .hero h1 { font-size: clamp(2.6rem, 6.2vw, 5.4rem); font-weight: 700; font-stretch: 90%; }
+  .hero .lede { margin-top: 1.75rem; max-width: 30rem; color: var(--muted); font-size: 1.125rem; }
+  .hero .lede strong { color: var(--text); font-weight: 500; }
+  .hero .hint { margin-top: 2.5rem; font-size: 0.875rem; color: var(--muted); }
+  .orb { position: relative; align-self: stretch; min-height: 26rem; touch-action: pan-y; }
+  .orb canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* Sections */
+  section { padding-block: clamp(4rem, 9vw, 8rem); }
+  .sec-title { font-size: clamp(1.9rem, 3.6vw, 3rem); margin-bottom: clamp(2rem, 5vw, 4rem); }
+
+  /* Services */
+  .svc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(2rem, 6vw, 6rem); border-top: 1px solid var(--line); }
+  .svc article { padding-block: 2rem; border-bottom: 1px solid var(--line); }
+  .svc h3 { font-size: clamp(1.35rem, 2vw, 1.7rem); }
+  .svc p { margin-top: 0.75rem; color: var(--muted); max-width: var(--measure); }
+
+  /* Experience */
+  .job { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(1.5rem, 4vw, 4rem); padding-block: clamp(2rem, 4vw, 3rem); border-top: 1px solid var(--line); }
+  .job h3 { font-size: clamp(1.75rem, 3vw, 2.5rem); }
+  .job .role { margin-top: 0.6rem; }
+  .when { color: var(--muted); font-size: 0.925rem; margin-top: 0.2rem; }
+  .job .sum { max-width: 40rem; }
+  .job .points { max-width: 40rem; }
+  .past { border-top: 1px solid var(--line); }
+  .prow { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 3fr) minmax(0, 5fr); gap: clamp(1rem, 4vw, 4rem); padding-block: 1.25rem; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .prow h3 { font-size: 1.2rem; }
+  .prow .when { margin-top: 0; }
+  .prow p:last-child { color: var(--muted); }
+  .sec-title:has(+ .intro) { margin-bottom: 1.25rem; }
+  .intro { color: var(--muted); max-width: 40rem; margin-bottom: clamp(2.5rem, 5vw, 4rem); }
+
+  /* Featured projects */
+  .feature {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: clamp(1.5rem, 4vw, 4rem);
+    align-items: start;
+  }
+  .feature + .feature { margin-top: clamp(4rem, 8vw, 7rem); }
+  .feature.flip .shot { order: 2; }
+  .shot {
+    aspect-ratio: 16 / 10;
+    background: var(--panel);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    display: grid; place-items: center;
+    color: var(--muted); font-size: 0.9rem; text-align: center; padding: 1.5rem;
+    overflow: hidden;
+  }
+  .shot img, .shot video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .shot:has(img), .shot:has(video) { border-style: solid; padding: 0; }
+  .feature h3 { font-size: clamp(1.75rem, 3vw, 2.5rem); }
+  .status { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--muted); margin-top: 0.75rem; }
+  .status::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--accent); }
+  .status.wip::before { background: transparent; box-shadow: inset 0 0 0 1.5px var(--muted); }
+  .feature .what { margin-top: 1.25rem; max-width: var(--measure); }
+  .points { margin-top: 1.25rem; max-width: var(--measure); color: var(--muted); }
+  .points li { padding-left: 1.1rem; position: relative; margin-top: 0.5rem; }
+  .points li::before { content: ""; position: absolute; left: 0; top: 0.72em; width: 0.4rem; height: 1px; background: var(--lilac); }
+  .points b { color: var(--text); font-weight: 500; }
+  .stack { margin-top: 1.5rem; font-size: 0.925rem; color: var(--muted); }
+  .links { margin-top: 1.25rem; display: flex; gap: 1.5rem; flex-wrap: wrap; }
+
+  /* Smaller projects */
+  .more { margin-top: clamp(4rem, 8vw, 7rem); border-top: 1px solid var(--line); }
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 5fr) minmax(0, 3fr) minmax(0, 2fr);
+    gap: 1.5rem;
+    padding-block: 1.5rem;
+    border-bottom: 1px solid var(--line);
+    align-items: baseline;
+  }
+  .row h3 { font-size: 1.35rem; }
+  .row .desc { color: var(--text); }
+  .row .tech { color: var(--muted); font-size: 0.925rem; }
+  .row .status { margin-top: 0; justify-self: end; }
+
+  /* About */
+  .about { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: clamp(2rem, 6vw, 6rem); }
+  .about .big { font-family: var(--display); font-size: clamp(1.4rem, 2.3vw, 1.9rem); line-height: 1.25; letter-spacing: -0.01em; }
+  .about .big + p { margin-top: 1.5rem; color: var(--muted); max-width: var(--measure); }
+  .jobs li { padding-block: 1.25rem; border-bottom: 1px solid var(--line); }
+  .jobs li:first-child { border-top: 1px solid var(--line); }
+  .jobs h3 { font-size: 1.2rem; }
+  .jobs .when { color: var(--muted); font-size: 0.925rem; margin-top: 0.25rem; }
+  .jobs p:last-child { margin-top: 0.6rem; color: var(--muted); }
+
+  /* Contact */
+  .contact { border-top: 1px solid var(--line); }
+  .contact h2 { font-size: clamp(2.2rem, 5.5vw, 4.5rem); font-weight: 700; font-stretch: 90%; max-width: 18ch; }
+  .contact .links { margin-top: 2rem; font-size: 1.125rem; }
+  footer { padding-block: 2rem 3rem; color: var(--muted); font-size: 0.875rem; }
+
+  @media (max-width: 52rem) {
+    .hero { grid-template-columns: minmax(0, 1fr); min-height: 0; padding-bottom: 2rem; }
+    .orb { order: -1; min-height: 0; height: min(92vw, 26rem); margin-inline: calc(var(--gutter) * -1); }
+    .feature, .about, .svc, .job { grid-template-columns: minmax(0, 1fr); }
+    .prow { grid-template-columns: minmax(0, 1fr); gap: 0.25rem; }
+    .feature.flip .shot { order: 0; }
+    .row { grid-template-columns: minmax(0, 1fr); gap: 0.4rem; }
+    .row .status { justify-self: start; margin-top: 0.4rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<header class="wrap top">
+  <a class="name" href="#top">Radek Muzikant</a>
+  <nav aria-label="Sections">
+    <a href="#services">Services</a>
+    <a href="#experience">Experience</a>
+    <a href="#projects">Side projects</a>
+    <a href="#contact">Contact</a>
+  </nav>
+</header>
+
+<main id="top">
+  <div class="wrap hero">
+    <div>
+      <h1>I make sure software works. Then I build some of my own.</h1>
+      <p class="lede">I'm Radek, a QA and product engineer in Prague. <strong>I own test automation and quality for product teams</strong>, and I design, build and ship my own apps with AI coding agents.</p>
+      <p class="hint">Everything in orbit is one of my side projects. Hover to wake it up, click a frame to jump there.</p>
+    </div>
+    <div class="orb" id="orbWrap"><canvas id="orb" aria-hidden="true"></canvas></div>
+  </div>
+
+  <section id="services">
+    <div class="wrap">
+      <h2 class="sec-title">What I do</h2>
+      <div class="svc">
+        <article>
+          <h3>Test automation from zero</h3>
+          <p>I set up end-to-end and API automation that runs in CI and stays stable, for web with Playwright or Cypress and for mobile with Maestro.</p>
+        </article>
+        <article>
+          <h3>Quality ownership for a product team</h3>
+          <p>I join as the QA in a cross-functional team, from spec review to the release decision. I have been the only QA on a platform for years, so I don't need a QA department around me.</p>
+        </article>
+        <article>
+          <h3>AI in the engineering workflow</h3>
+          <p>I set up Claude Code, MCP servers and agent workflows for testing, support and investigation. At Spaceflow one of them cut the support backlog from about 200 requests to 60.</p>
+        </article>
+        <article>
+          <h3>Product engineering</h3>
+          <p>Frontend features, fixes and small products end to end. I have shipped production Vue.js code and built my own apps in React, Flutter and Node.js.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="experience">
+    <div class="wrap">
+      <h2 class="sec-title">Experience</h2>
+
+      <article class="job">
+        <div>
+          <h3>Dateio</h3>
+          <p class="role">QA Automation Engineer</p>
+          <p class="when">March 2026 to now, Prague</p>
+        </div>
+        <div>
+          <p class="sum">Sole QA engineer for a card-linked cashback platform used by banks across Central and Eastern Europe: merchant self-service portal, back office, sales tools and mobile SDK.</p>
+          <ul class="points">
+            <li>Own the end-to-end automation suite in Playwright and TypeScript, from test design to nightly Jenkins runs</li>
+            <li>Verify every acceptance criterion across frontend, BFF and backend, with API responses and database evidence</li>
+            <li>Trace failures to root cause in Kibana logs and PostgreSQL, such as a hidden BFF rate limit behind intermittent CI failures</li>
+            <li>Use Claude Code with MCP servers daily to generate and maintain tests and speed up investigation</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="job">
+        <div>
+          <h3>Spaceflow</h3>
+          <p class="role">Quality Assurance Engineer</p>
+          <p class="when">February 2021 to March 2026, Prague</p>
+        </div>
+        <div>
+          <p class="sum">Sole QA for the whole product: a Vue.js web platform and iOS and Android apps serving thousands of users.</p>
+          <ul class="points">
+            <li>Owned quality strategy and took part in release decisions, with authority to block a release on risk</li>
+            <li>Built the automation: about 50 end-to-end and 100 component tests in Cypress, plus mobile tests in Maestro</li>
+            <li>Contributed production Vue.js code, including the user invitation flow, through the full merge request and review cycle</li>
+            <li>Built an AI support agent on the codebase, docs and past requests. The backlog dropped from about 200 requests to 60 within weeks</li>
+            <li>Wrote product specs and mentored a junior QA engineer</li>
+          </ul>
+        </div>
+      </article>
+
+      <div class="past">
+        <article class="prow">
+          <h3>Livesport</h3>
+          <p class="when">QA Engineer, 2020 to 2021</p>
+          <p>Feature and regression testing for web and mobile across devices and OS versions, with BrowserStack.</p>
+        </article>
+        <article class="prow">
+          <h3>Velvon</h3>
+          <p class="when">QA Tester, 2019 to 2020</p>
+          <p>Test plans and frontend testing for web applications, with UX feedback to the product team.</p>
+        </article>
+        <article class="prow">
+          <h3>Windy</h3>
+          <p class="when">Software Tester, 2019</p>
+          <p>Manual and automated testing in Cypress for web and mobile.</p>
+        </article>
+        <article class="prow">
+          <h3>Cool Ticket</h3>
+          <p class="when">QA Tester, 2018 to 2019</p>
+          <p>Regression and functional testing of iOS and Android apps.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects">
+    <div class="wrap">
+      <h2 class="sec-title">Side projects</h2>
+      <p class="intro">None of this is client work. These are personal projects I build in my own time, for fun and to try things I can't try at my day job. My usual loop: plan the feature in a chat, hand a precise prompt to Claude Code, then review what comes back the way I would review any release.</p>
+
+      <article class="feature" id="form7">
+        <!-- Replace the text inside .shot with <img src="form7.png" alt="..."> or a <video autoplay muted loop playsinline> -->
+        <div class="shot">Screenshot goes here: Form7 workout screen</div>
+        <div>
+          <h3>Form7</h3>
+          <p class="status">Early access, invite only</p>
+          <p class="what">A gym and training app I designed and built end to end. It runs as an installable web app today, with native iOS and Android as the next step.</p>
+          <ul class="points">
+            <li><b>Whole product, one person:</b> product decisions, design, code, testing and release</li>
+            <li><b>Built with Claude Code:</b> planned in chat, implemented by the agent, verified by me like any other release</li>
+            <li><b>Run like a real project:</b> docs in Notion, tasks in Linear, deployed on Vercel</li>
+          </ul>
+          <p class="stack">PWA, Vercel, Claude Code</p>
+          <p class="links"><a href="#">Open Form7</a></p>
+        </div>
+      </article>
+
+      <article class="feature flip" id="summarizer">
+        <div class="shot">Screenshot goes here: summarizer with live progress</div>
+        <div>
+          <h3>YouTube to Notion summarizer</h3>
+          <p class="status">Live, private tool</p>
+          <p class="what">Paste a YouTube link and get structured Czech notes saved to Notion. I use it for science, news and educational videos I want to understand without watching.</p>
+          <ul class="points">
+            <li><b>Transcript fallback chain:</b> caption extractors first, then Supadata API, then yt-dlp, with manual paste as a last resort</li>
+            <li><b>Duplicate check:</b> looks in Notion before generating, so the same video is never paid for twice</li>
+            <li><b>Live progress:</b> the server streams each stage as NDJSON, with percentage and time remaining</li>
+            <li><b>Cost tracking:</b> estimate before, real cost from token usage after, monthly overview</li>
+          </ul>
+          <p class="stack">Node.js, Express 5, vanilla JavaScript, OpenAI API, Notion SDK, Vercel</p>
+          <p class="links"><a href="#">Source on GitHub</a></p>
+        </div>
+      </article>
+
+      <div class="more">
+        <article class="row" id="reptear">
+          <h3>Rep &amp; Tear</h3>
+          <p class="desc">A DOOM-styled fitness tracker that turns workouts into a game.</p>
+          <p class="tech">React, TypeScript, Firebase, Vercel</p>
+          <p class="status">Live</p>
+        </article>
+        <article class="row" id="elio">
+          <h3>Elio</h3>
+          <p class="desc">An everyday clarity coach: mood tracking, insights and reflection. Heading to the App Store.</p>
+          <p class="tech">Flutter, Next.js</p>
+          <p class="status wip">In development</p>
+        </article>
+        <article class="row" id="trivia">
+          <h3>Dark Trivia Protocol</h3>
+          <p class="desc">A trivia game run by a game master. Players join from their phones with a QR code.</p>
+          <p class="tech">HTML, JavaScript, Firebase</p>
+          <p class="status">Live</p>
+        </article>
+        <article class="row" id="converter">
+          <h3>South Africa Price Converter</h3>
+          <p class="desc">A Chrome extension that shows prices in Czech koruna next to rand prices on South African sites.</p>
+          <p class="tech">Chrome extension, Manifest V3</p>
+          <p class="status wip">In development</p>
+        </article>
+        <article class="row" id="hooligan">
+          <h3>Hooligan</h3>
+          <p class="desc">A 2D pixel art brawler set in football away-day culture, starting in Amsterdam.</p>
+          <p class="tech">Godot 4, Claude Code over MCP</p>
+          <p class="status wip">In development</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+
+  <section id="contact" class="contact">
+    <div class="wrap">
+      <h2>Got a product to fix or an idea to build? Write to me.</h2>
+      <p class="links">
+        <a href="https://www.linkedin.com/in/radek-muzikant521/">LinkedIn</a>
+        <a href="#">GitHub</a>
+        <a href="mailto:you@example.com">Email</a>
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">Designed and built by Radek Muzikant in Prague.</footer>
+
+<script>
+(() => {
+  // Orbiting bodies. "target" is the id of the project block to scroll to.
+  const BODIES = [
+    { label: 'Form7',       target: 'form7',      ro: 1.55, inc:  0.35, ph: 0.4, sp:  0.42, size: 3.2 },
+    { label: 'Summarizer',  target: 'summarizer', ro: 1.95, inc: -0.55, ph: 2.1, sp: -0.30, size: 2.4 },
+    { label: 'Rep & Tear',  target: 'reptear',    ro: 2.25, inc:  0.90, ph: 3.6, sp:  0.24, size: 1.8 },
+    { label: 'Elio',        target: 'elio',       ro: 1.75, inc: -1.05, ph: 5.0, sp:  0.36, size: 1.8 },
+    { label: 'Hooligan',    target: 'hooligan',   ro: 2.45, inc:  0.15, ph: 1.2, sp: -0.20, size: 1.5 }
+  ];
+  const IDLE = [185, 164, 255];   // lilac
+  const HOT  = [255, 46, 126];    // accent
+
+  const cv = document.getElementById('orb');
+  const wrap = document.getElementById('orbWrap');
+  const ctx = cv.getContext('2d');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const D = 5.2;                  // camera distance
+  let W = 0, H = 0;
+
+  function resize() {
+    const r = wrap.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height;
+    cv.width = Math.max(1, Math.round(W * dpr));
+    cv.height = Math.max(1, Math.round(H * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  new ResizeObserver(resize).observe(wrap);
+  resize();
+
+  function fib(n, r) {
+    const out = [], g = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < n; i++) {
+      const y = 1 - 2 * (i + 0.5) / n, q = Math.sqrt(1 - y * y), th = g * i;
+      out.push([Math.cos(th) * q * r, y * r, Math.sin(th) * q * r]);
+    }
+    return out;
+  }
+  const core = fib(1100, 1);
+  const shell = fib(420, 1.72);
+
+  const ARMS = 16, PER = 64, disc = [];
+  for (let a = 0; a < ARMS; a++) {
+    for (let j = 0; j < PER; j++) {
+      const u = j / (PER - 1);
+      disc.push({
+        r: 1.12 + u * 1.05,
+        th: a / ARMS * Math.PI * 2 + u * 1.9,
+        z: (Math.random() - 0.5) * 0.06,
+        s: 0.7 + u * u * 3.4,
+        arm: a
+      });
+    }
+  }
+  const stars = [];
+  for (let i = 0; i < 150; i++) stars.push({ x: Math.random(), y: Math.random(), a: 0.12 + Math.random() * 0.4, s: Math.random() < 0.15 ? 1.6 : 1 });
+
+  // State
+  let t = 3.1, last = performance.now(), h = 0;
+  let inside = false, sticky = false;
+  let mx = 0, my = 0, tmx = 0, tmy = 0;
+  let rects = [], running = true;
+  // Glitch pulse: a short burst where the colour flips and horizontal slices slide sideways
+  let clock = 0, nextGl = 1.6, glT = 0, gl = 0, bandH = 40, bandTick = 0;
+  const bands = new Float32Array(48);
+
+  // Projection with a shared output to avoid allocations
+  let px = 0, py = 0, pf = 1, pz = 0;
+  let cy_ = 1, sy_ = 0, cx_ = 1, sx_ = 0, CX = 0, CY = 0, S = 1;
+  function proj(x, y, z) {
+    const x1 = x * cy_ + z * sy_, z1 = -x * sy_ + z * cy_;
+    const y2 = y * cx_ - z1 * sx_, z2 = y * sx_ + z1 * cx_;
+    pf = D / (D - z2); pz = z2;
+    px = CX + x1 * pf * S; py = CY - y2 * pf * S;
+    if (gl) { const bi = (py / bandH) | 0; if (bi >= 0 && bi < 48) px += bands[bi]; }
+  }
+  function depth(z) { return Math.max(0, Math.min(1, (z + 2.2) / 4.4)); }
+
+  function frame(now) {
+    if (!running) return;
+    const dt = Math.min((now - last) / 1000, 0.05); last = now;
+    const hot = inside || sticky;
+    h += ((hot ? 1 : 0) - h) * Math.min(1, dt * 5);
+    mx += (tmx - mx) * Math.min(1, dt * 4);
+    my += (tmy - my) * Math.min(1, dt * 4);
+    if (!reduce) t += dt * (1 + h * 1.5);
+
+    S = Math.min(W, H) * 0.17;
+    clock += dt;
+    if (!reduce && clock > nextGl) { glT = 0.34; nextGl = clock + 1.7 + Math.random() * 1.3; }
+    if (glT > 0) {
+      glT -= dt; gl = 1; bandTick -= dt;
+      if (bandTick <= 0) {
+        bandTick = 0.07; bandH = 16 + Math.random() * 38;
+        for (let i = 0; i < 48; i++) bands[i] = Math.random() < 0.35 ? (Math.random() - 0.5) * S * 1.2 : 0;
+      }
+    } else gl = 0;
+    const hc = Math.max(h, gl);
+
+    const cr = Math.round(IDLE[0] + (HOT[0] - IDLE[0]) * hc);
+    const cg = Math.round(IDLE[1] + (HOT[1] - IDLE[1]) * hc);
+    const cb = Math.round(IDLE[2] + (HOT[2] - IDLE[2]) * hc);
+    const col = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
+
+    ctx.clearRect(0, 0, W, H);
+    CX = W / 2; CY = H / 2;
+    const gy = mx * 0.55, gx = 0.16 + my * 0.3;
+    cy_ = Math.cos(gy); sy_ = Math.sin(gy); cx_ = Math.cos(gx); sx_ = Math.sin(gx);
+
+    // Stars
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgb(200,190,235)';
+    for (const s of stars) {
+      ctx.globalAlpha = s.a;
+      ctx.fillRect(s.x * W - mx * 10, s.y * H - my * 10, s.s, s.s);
+    }
+
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = col;
+
+    // Faint outer shell
+    let a = -t * 0.12, ca = Math.cos(a), sa = Math.sin(a);
+    for (const p of shell) {
+      proj(p[0] * ca + p[2] * sa, p[1], -p[0] * sa + p[2] * ca);
+      ctx.globalAlpha = 0.07 + 0.2 * depth(pz);
+      ctx.fillRect(px, py, 1.1, 1.1);
+    }
+
+    // Spiral disc, turning around the vertical axis
+    a = t * 0.38; ca = Math.cos(a); sa = Math.sin(a);
+    const k = S / 110;
+    for (const p of disc) {
+      const th = p.th + t * 0.12;
+      const r = p.r * (1 + 0.05 * h * Math.sin(t * 3 + p.arm));
+      const x = r * Math.cos(th), y = r * Math.sin(th);
+      proj(x * ca + p.z * sa, y, -x * sa + p.z * ca);
+      const d = depth(pz), sz = p.s * pf * k;
+      if (sz > 1.7) {
+        ctx.globalAlpha = (0.14 + 0.3 * d) * (1 - 0.35 * h);
+        ctx.beginPath(); ctx.arc(px, py, sz, 0, 6.2832); ctx.fill();
+      } else {
+        ctx.globalAlpha = 0.25 + 0.6 * d;
+        ctx.fillRect(px, py, 1.5, 1.5);
+      }
+    }
+
+    // Core sphere, with bands that appear on hover
+    a = t * 0.3; ca = Math.cos(a); sa = Math.sin(a);
+    const cs = Math.max(1.2, 1.5 * k);
+    const br = 1 + 0.04 * Math.sin(t * 1.3);   // the core breathes
+    for (const p of core) {
+      proj((p[0] * ca + p[2] * sa) * br, p[1] * br, (-p[0] * sa + p[2] * ca) * br);
+      const band = 0.5 + 0.5 * Math.sin(p[1] * 16 - t * 2.2);
+      ctx.globalAlpha = (0.3 + 0.7 * depth(pz)) * (1 - 0.72 * h * band);
+      ctx.fillRect(px, py, cs * pf, cs * pf);
+    }
+
+    // Project bodies with tracking frames
+    rects = [];
+    ctx.font = '500 11px ui-monospace, "SF Mono", Menlo, Consolas, monospace';
+    ctx.textBaseline = 'alphabetic';
+    for (const b of BODIES) {
+      const ang = b.ph + t * b.sp;
+      const x = b.ro * Math.cos(ang), z0 = b.ro * Math.sin(ang);
+      const ci = Math.cos(b.inc), si = Math.sin(b.inc);
+      proj(x, -z0 * si, z0 * ci);
+      const d = depth(pz), R = b.size * pf * k * 2.2 * (1 + 0.4 * Math.sin(t * 1.7 + b.ph * 3));
+      const bx = px, by = py;
+
+      ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createRadialGradient(bx, by, 0, bx, by, R * 2.6);
+      g.addColorStop(0, 'rgba(255,255,255,0.95)');
+      g.addColorStop(0.28, 'rgba(' + cr + ',' + cg + ',' + cb + ',0.75)');
+      g.addColorStop(1, 'rgba(' + cr + ',' + cg + ',' + cb + ',0)');
+      ctx.globalAlpha = 0.45 + 0.55 * d;
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(bx, by, R * 2.6, 0, 6.2832); ctx.fill();
+
+      // Frame
+      ctx.globalCompositeOperation = 'source-over';
+      const bs = Math.max(30, (26 + b.size * 7) * pf * k);
+      const x0 = Math.round(bx - bs / 2) + 0.5, y0 = Math.round(by - bs / 2) + 0.5;
+      const al = (0.3 + 0.7 * hc) * (0.5 + 0.5 * d);
+      ctx.strokeStyle = col; ctx.fillStyle = col;
+      ctx.lineWidth = 1; ctx.globalAlpha = al * 0.4;
+      ctx.strokeRect(x0, y0, bs, bs);
+      const tk = bs * 0.2;
+      ctx.globalAlpha = al; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0 + tk); ctx.lineTo(x0, y0); ctx.lineTo(x0 + tk, y0);
+      ctx.moveTo(x0 + bs - tk, y0); ctx.lineTo(x0 + bs, y0); ctx.lineTo(x0 + bs, y0 + tk);
+      ctx.moveTo(x0 + bs, y0 + bs - tk); ctx.lineTo(x0 + bs, y0 + bs); ctx.lineTo(x0 + bs - tk, y0 + bs);
+      ctx.moveTo(x0 + tk, y0 + bs); ctx.lineTo(x0, y0 + bs); ctx.lineTo(x0, y0 + bs - tk);
+      ctx.stroke();
+      ctx.globalAlpha = Math.min(1, al + 0.25);
+      ctx.fillText(b.label, x0, y0 - 6);
+      rects.push({ x: x0 - 4, y: y0 - 18, w: bs + 8, h: bs + 22, target: b.target });
+      ctx.fillStyle = col;
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(frame);
+  }
+
+  function hit(e) {
+    const r = wrap.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    for (let i = rects.length - 1; i >= 0; i--) {
+      const q = rects[i];
+      if (x >= q.x && x <= q.x + q.w && y >= q.y && y <= q.y + q.h) return q;
+    }
+    return null;
+  }
+  wrap.addEventListener('pointermove', e => {
+    const r = wrap.getBoundingClientRect();
+    tmx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+    tmy = ((e.clientY - r.top) / r.height - 0.5) * 2;
+    if (e.pointerType !== 'touch') { if (!inside && !reduce) glT = 0.3; inside = true; }
+    wrap.style.cursor = hit(e) ? 'pointer' : 'default';
+  });
+  wrap.addEventListener('pointerleave', () => { inside = false; tmx = 0; tmy = 0; });
+  wrap.addEventListener('click', e => {
+    const q = hit(e);
+    if (q) {
+      const el = document.getElementById(q.target);
+      if (el) el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+    } else if (matchMedia('(hover: none)').matches) {
+      sticky = !sticky;   // on touch screens a tap toggles the "awake" state
+    }
+  });
+
+  new IntersectionObserver(entries => {
+    const vis = entries[0].isIntersecting;
+    if (vis && !running) { running = true; last = performance.now(); requestAnimationFrame(frame); }
+    else if (!vis) running = false;
+  }).observe(wrap);
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
